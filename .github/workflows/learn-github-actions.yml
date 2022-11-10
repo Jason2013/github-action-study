@@ -3,11 +3,26 @@ run-name: ${{ github.actor }} is learning GitHub Actions
 on: [push]
 jobs:
   check-bats-version:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [windows-2022, windows-2019]
+        config: [Debug, Release]
+        include:
+            - os: windows-2022
+              generator: "Visual Studio 17 2022"
+            - os: windows-2019
+              generator: "Visual Studio 16 2019"
+    runs-on: ${{ matrix.os }} #ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-      - run: npm install -g bats
-      - run: bats -v
+      - name: Configure
+        working-directory: ${{ github.workspace }}
+        run: cmake -G ${{ matrix.generator }} -A x64 -S . -B build
+      - name: Build
+        working-directory: ${{ github.workspace }}
+        run: cmake --build build --config ${{ matrix.config }}
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: '14'
+#      - run: npm install -g bats
+#      - run: bats -v
